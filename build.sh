@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Load Hadoop and Java modules
-module load hadoop
-module load openjdk
+# module load hadoop
+# module load openjdk
 
 # Define the Hadoop installation directory
-SW=/path/to/hadoop
-export HADOOP_HOME=$SW/hadoop-3.2.2
-PATH="$HADOOP_HOME/bin:$PATH"
+# SW=/path/to/hadoop
+# export HADOOP_HOME=$SW/hadoop-3.3.5
+# PATH="$HADOOP_HOME/bin:$PATH"
 
 # Define the directory where your Java source files are located
 SRC_DIR=/path/to/your/java/source

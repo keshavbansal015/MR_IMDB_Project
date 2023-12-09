@@ -3,6 +3,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import java.io.IOException;
 
+import javax.naming.Context;
+
 public class TitleBasicsMapper extends Mapper<LongWritable, Text, Text, Text> {
 
     @Override
@@ -19,8 +21,23 @@ public class TitleBasicsMapper extends Mapper<LongWritable, Text, Text, Text> {
             String releaseYear = fields[3];
             String genres = fields[4];
 
-            // Emitting the title ID as key, and the rest of the information as value
-            context.write(new Text(titleId), new Text("titleBasics\t" + titleType + "\t" + titleName + "\t" + releaseYear + "\t" + genres));
+            // Check if the titleType is "movie" and releaseYear is between 2010 and 2020
+            if (titleType.equals("movie") && isYearInRange(releaseYear, 1931, 1940)) {
+                // Emitting the title ID as key, and the rest of the information as value
+                context.write(new Text(titleId),
+                        new Text("titleBasics," + titleId + "," + titleName + "," + releaseYear + "," + genres));
+            }
+        }
+    }
+
+    // Helper method to check if the year is in the specified range
+    private boolean isYearInRange(String year, int startYear, int endYear) {
+        try {
+            int yearInt = Integer.parseInt(year);
+            return yearInt >= startYear && yearInt <= endYear;
+        } catch (NumberFormatException e) {
+            // If the year is not a valid integer, return false
+            return false;
         }
     }
 }
