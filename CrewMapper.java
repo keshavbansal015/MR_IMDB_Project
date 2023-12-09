@@ -8,12 +8,21 @@ public class CrewMapper extends Mapper<LongWritable, Text, Text, Text> {
     @Override
     public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
         String[] fields = value.toString().split("\t");
+        
         if (fields.length >= 2) {
             String titleId = fields[0];
             String[] directors = fields[1].split(",");
+            
+            StringBuilder crewInfo = new StringBuilder("crew," + titleId + ","); 
             for (String director : directors) {
-                context.write(new Text(titleId), new Text("director\t" + director));
+                context.append(director).append(",");
             }
+
+            if(crewInfo.length() > 0) {
+                crewInfo.deleteCharAt(crewInfo.length() - 1);
+            }
+
+            context.write(new Text(titleId), new Text(crewInfo.toString()));
         }
     }
 }
