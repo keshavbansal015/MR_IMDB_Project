@@ -41,7 +41,7 @@ public class JoinReducer extends Reducer<Text, Text, Text, Text> {
         }
     }
 
-    private String getDirecString(Set<String> directors) {
+    private String getDirectorList(Set<String> directors) {
         StringBuilder directorList = new StringBuilder();
         for (String director : directors) {
             // seperating with spaces instead of commas
