@@ -15,14 +15,10 @@ public class CrewMapper extends Mapper<LongWritable, Text, Text, Text> {
             
             StringBuilder crewInfo = new StringBuilder("crew," + titleId + ","); 
             for (String director : directors) {
-                context.append(director).append(",");
+                if (!"\\N".equals(director.trim()))
+                    context.write(new Text(titleId), new Text("crew," + titleId + "," + director));
             }
 
-            if(crewInfo.length() > 0) {
-                crewInfo.deleteCharAt(crewInfo.length() - 1);
-            }
-
-            context.write(new Text(titleId), new Text(crewInfo.toString()));
         }
     }
 }
