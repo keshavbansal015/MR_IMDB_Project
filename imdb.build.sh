@@ -27,7 +27,7 @@ mkdir -p classes
 
 
 javac -d classes -cp classes:'hadoop classpath' src/*.java
-jar of imdb.jar -C classes .
+jar cf imdb.jar -C classes .
 
 chmod -R 750 classes
 chmod -R 750 imdb.jar
