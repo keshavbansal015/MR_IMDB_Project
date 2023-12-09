@@ -35,18 +35,18 @@ public class JoinReducer extends Reducer<Text, Text, Text, Text> {
             for (String actor : actors) {
                 if (directors.contains(actor)) {
                     // EMITTING final output format as key, value (output title, director1 director2, actor, genre, year)
-                    context.write(new Text(key), new Text(title + "," + actor + "," + genre + "," + year));
+                    context.write(new Text(key), new Text(title + "," + getDirectorList(directors) + "," + actor + "," + genre + "," + year));
                 }
             }
         }
     }
 
-    // private String getDirectorList(Set<String> directors) {
-    //     StringBuilder directorList = new StringBuilder();
-    //     for (String director : directors) {
-    //         // seperating with spaces instead of commas
-    //         directorList.append(director).append(" ");
-    //     }
-    //     return directorList.toString().trim();
-    // }
+    private String getDirectorList(Set<String> directors) {
+        StringBuilder directorList = new StringBuilder();
+        for (String director : directors) {
+            // seperating with spaces instead of commas
+            directorList.append(director).append(" ");
+        }
+        return directorList.toString().trim();
+    }
 }
