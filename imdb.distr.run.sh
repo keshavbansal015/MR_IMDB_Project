@@ -38,7 +38,7 @@ hdfs dfs -put input/* /user/$USER/input/
 hdfs dfs -mkdir -p /user/$USER/reducer1
 ##echo "Transferred to directory"
 
-hadoop jar IMDbJoinDriver.jar IMDBApp /user/$USER/input/title.basics.tsv /user/$USER/input/imdb00-title-actors.csv /user/$USER/input/title.crew.tsv /user/$USER/output 790 1
+hadoop jar IMDbJoinDriver.jar IMDBApp /user/$USER/input/title.basics.tsv /user/$USER/input/imdb00-title-actors.csv /user/$USER/input/title.crew.tsv /user/$USER/output
 rm -rf output-distr
 mkdir output-distr
 hdfs dfs -get /user/$USER/output/* output-distr/
