@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH -A uot191
+#SBATCH -A uot192
 #SBATCH --job-name="MR_IMDB_Project"
 #SBATCH --output="imdb.distr.out"
 #SBATCH --partition=compute
@@ -18,7 +18,7 @@ module load hadoop
 module load openjdk
 
 SW=/expanse/lustre/projects/uot191/fegaras 
-export HADOOP_HOME-$SW/hadoop-3.2.2
+export HADOOP_HOME=$SW/hadoop-3.2.2
 PATH-"$HADOOP_HOME/bin:$PATH"
 
 rm -rf imdb.jar

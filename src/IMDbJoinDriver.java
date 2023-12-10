@@ -1,6 +1,7 @@
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
@@ -35,7 +36,7 @@ public class IMDbJoinDriver {
         job1.setOutputKeyClass(Text.class);
         FileOutputFormat.setOutputPath(job1, new Path(args[3] + "inter"));
         job1.waitForCompletion(true);
-        Systemexit(0);
+        System.exit(0);
 
         // Next configuration
         // Configuration conf = new Configuration();

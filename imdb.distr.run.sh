@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH -A uot191
+#SBATCH -A uot192
 #SBATCH --job-name="MR_IMDB_Project"
 #SBATCH --output="imdb.distr.out"
 #SBATCH --partition=compute
@@ -20,10 +20,10 @@ module load cpu/0.15.4
 module load hadoop
 module load openjdk
 
-SW=/expanse/lustre/projects/uot191/fegaras 
-export HADOOP_HOME-$SW/hadoop-3.2.2
-export MYHADOOP_HOME-$SW/myhadoop
-PATH-"$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$MYHAOOP_HOME/bin:$PATH"
+SW=/expanse/lustre/projects/uot182/fegaras 
+export HADOOP_HOME=$SW/hadoop-3.2.2
+export MYHADOOP_HOME=$SW/myhadoop
+PATH="$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$MYHAOOP_HOME/bin:$PATH"
 
 myhadoop-configure.sh -s /scratch/$USER/job_$SLURM_JOBID
 
@@ -31,6 +31,6 @@ start-all.sh
 
 hdfs dfs -rm -r /user/$USER/*
 hdfs dfs -mkdir -p /user/$USER
-hdfs dfs -mkdir -p /user/vsabhaya
+# hdfs dfs -mkdir -p /user/vsabhaya
 hdfs dfs -mkdir -p /user/$USER/input
 echo "Directory created"
