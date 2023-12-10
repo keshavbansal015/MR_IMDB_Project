@@ -183,7 +183,6 @@ public class IMDbJoinDriver {
         conf.set("mapreduce.map.memory.mb", "2048"); // This is in Mb
         conf.set("mapreduce.reduce.memory.mb", "2048");
 
-        FileSystem fs = FileSystem.get(conf);
         Job job = Job.getInstance(conf, "imdb project");
         job.setJarByClass(IMDbJoinDriver.class);
         // job.setNumReduceTasks(2); // Sets the no of Reducer
