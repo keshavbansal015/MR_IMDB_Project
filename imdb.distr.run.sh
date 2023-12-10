@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH -A uot192
+#SBATCH -A uot191
 #SBATCH --job-name="MR_IMDB_Project"
 #SBATCH --output="imdb.distr.out"
 #SBATCH --partition=compute
