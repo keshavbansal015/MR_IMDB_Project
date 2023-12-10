@@ -2,28 +2,159 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.apache.hadoop.mapreduce.lib.input.KeyValueTextInputFormat;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.StringTokenizer;
 
 
 public class IMDbJoinDriver {
+    public static class MapperActors
+            extends Mapper<Object, Text, Text, Text> {
 
-    // public static class TitleBasicsMapper extends Mapper<LongWritable, Text, Text, Text> {
-        
-    // }
+        private final static Text outValue = new Text();
+        private Text word = new Text();
+
+        public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+            StringTokenizer itr = new StringTokenizer(value.toString(), "\n");
+
+            while (itr.hasMoreTokens()) {
+                String str = itr.nextToken();
+                String[] result = str.toString().split(",");
+                int n = result.length;
+
+                String titleId = result[0];
+                String actorId = result[1];
+                String actorName = result[2];
+
+                if (!titleId.equals("\\N") && !actorId.equals("\\N") && !actorName.equals("\\N")) {
+                    String newKey = titleId;
+                    String newValue = "a" + ";" + titleId + ";" + actorId + ";" + actorName;
+                    word.set(newKey);
+                    outValue.set(newValue);
+                    context.write(word, outValue);
+                }
+            }
+        }
+    }
+
+    public static class MapperCrew extends Mapper<Object, Text, Text, Text> {
+        private final static Text outValue = new Text();
+        private Text word = new Text();
+
+        public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+            StringTokenizer itr = new StringTokenizer(value.toString(), "\n");
+            while (itr.hasMoreTokens()) {
+                String str = itr.nextToken();
+                String[] result = str.toString().split("\t");
+                int n = result.length;
+
+                String titleId = result[0];
+                String directorsId = result[1];
+                if (titleId.equals("tconst")) {
+                    continue;
+                }
+                if (!titleId.equals("\\N") && !directorsId.equals("\\N")) {
+                    String newKey = titleId;
+                    String newValue = "c" + ";" + titleId + ";" + directorsId;
+                    word.set(newKey);
+                    outValue.set(newValue);
+                    context.write(word, outValue);
+                }
+            }
+        }
+    }
+
+    public static class MapperBasics extends Mapper<Object, Text, Text, Text, Text, Text, Text, Text, Text, Text> {
+        private final static Text outValue = new Text();
+        private Text word = new Text();
+
+        public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+            StringTokenizer itr = new StringTokenizer(value.toString(), "\n");
+            while (itr.hasMoreTokens()) {
+                String str = itr.nextToken();
+                String[] result = str.toString().split("\t");
+                int n = result.length;
+
+                String titleId = result[0];
+                String titleType = result[1];
+                String primaryTitle = result[2];
+                String originalTitle = result[3];
+                String isAdult = result[4];
+                String startYear = result[5];
+                String endYear = result[6];
+                String runtimeMinutes = result[7];
+                String genres = result[8];
+                if (titleId.equals("tconst") || !titleType.equals("movie") || !isYearInRange(startYear, 1931, 1940)
+                        || !titleId.equals("\\N") || !titleType.equals("\\N") || !originalTitle.equals("\\N")) {
+                    continue;
+                }
+                String newKey = titleId;
+                String newValue = "b" + ";" + titleId + ";" + titleType + ";" + originalTitle + ";" + startYear + ";"
+                        + genres;
+                word.set(newKey);
+                outValue.set(newValue);
+                context.write(word, outValue);
+            }
+        }
+
+        private boolean isYearInRange(String year, int startYear, int endYear) {
+            try {
+                int yearInt = Integer.parseInt(year);
+                return yearInt >= startYear && yearInt <= endYear;
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        }
+    }
+
+    public static class ImdbReducer extends Reducer<Text, Text, Text, Text> {
+        private final static Text outValue = new Text();
+        private Text word = new Text();
+
+        public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+            // Initialize variables to store actor and director details
+            String actorDetails = null;
+            String directorDetails = null;
+            String titleDetails = null;
+
+            // Iterate over values to separate actor and director information
+            for (Text val : values) {
+                String firstTwoChars = val.toString().substring(0, 2);
+                String value = val.toString();
+                if (firstTwoChars.equals("a;")) { // Assuming actor values contain the word 'actor'
+                    actorDetails = value;
+                } else if (firstTwoChars.equals("c;")) { // Assuming director values contain the word 'director'
+                    directorDetails = value;
+                } else if (firstTwoChars.equals("b;")){
+                    titleDetails = value;
+                }
+            }
+            
+            String actorId = actorDetails.split(";")[2];
+            String[] directorIds = directorDetails.split(";")[2].split(",");
+
+            for (String directorId: directorIds) {
+                if (directorId.equals(actorId)){
+                    String newKey = "";
+                    String[] titleDetailsSplit = titleDetails.split(";");
+                    String newValue = titleDetailsSplit[2]+","+titleDetailsSplit[3]+","+titleDetailsSplit[4]+","+titleDetailsSplit[5]+","+actorDetails.split(";")[3];
+                    word.set(newKey);
+                    outValue.set(newValue);
+                    context.write(word, outValue);
+                    break;
+                }
+            }
+        }
+    }
 
     public static void main(String[] args) throws Exception {
         if (args.length != 4) {
@@ -32,174 +163,46 @@ public class IMDbJoinDriver {
             System.exit(-1);
         }
 
+        String movieData = args[0];
+        String actorData = args[1];
+        String crewData = args[2];
+        String outData = args[3];
+
+        Path moviePath = new Path(movieData);
+        Path actorPath = new Path(actorData);
+        Path crewPath = new Path(crewData);
+        Path outPath = new Path(outData);
+
+
         // from presentation
         Configuration conf = new Configuration();
+
         int split = 700 * 1024 * 1024; // This is in bytes
         String splitsize = Integer.toString(split);
         conf.set("mapreduce.input.fileinputformat.split.minsize", splitsize);
-        // conf.set("mapreduce.map.memory.mb", "2048"); // This is in Mb
-        // conf.set("mapreduce.reduce.memory.mb", "2048");
-        Job job1 = Job.getInstance(conf, "actor-director gig");
-        job1.setJarByClass(IMDbJoinDriver.class);
-        MultipleInputs.addInputPath(job1, new Path(args[0]), TextInputFormat.class, TitleBasicsMapper.class);
-        MultipleInputs.addInputPath(job1, new Path(args[1]), TextInputFormat.class, ActorsMapper.class);
-        MultipleInputs.addInputPath(job1, new Path(args[2]), TextInputFormat.class, CrewMapper.class);
-        job1.setReducerClass(JoinReducer.class);
-        job1.setMapOutputKeyClass(Text.class);
-        job1.setMapOutputValueClass(Text.class);
-        job1.setOutputValueClass(IntWritable.class);
-        job1.setOutputKeyClass(Text.class);
-        FileOutputFormat.setOutputPath(job1, new Path(args[3] + "inter"));
-        job1.waitForCompletion(true);
+        conf.set("mapreduce.map.memory.mb", "2048"); // This is in Mb
+        conf.set("mapreduce.reduce.memory.mb", "2048");
+
+        FileSystem fs = FileSystem.get(conf);
+        Job job = Job.getInstance(conf, "imdb project");
+        job.setJarByClass(IMDbJoinDriver.class);
+        // job.setNumReduceTasks(2); // Sets the no of Reducer
+
+        MultipleInputs.addInputPath(job, actorPath, TextInputFormat.class, MapperActors.class);
+        MultipleInputs.addInputPath(job, moviePath, TextInputFormat.class, MapperBasics.class);
+        MultipleInputs.addInputPath(job, crewPath, TextInputFormat.class, MapperCrew.class);
+
+        job.setReducerClass(ImdbReducer.class);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(Text.class);
+        job.setOutputFormatClass(TextOutputFormat.class);
+
+        // job.setMapOutputKeyClass(Text.class);
+        // job.setMapOutputValueClass(Text.class);
+
+        FileOutputFormat.setOutputPath(job, outPath);
+        job.waitForCompletion(true);
         System.exit(0);
-
-        // Next configuration
-        // Configuration conf = new Configuration();
-        // Job job1 = Job.getInstance(conf, "actor-director gig");
-        // int split = 700*1024*1024; // This is in bytes
-        // String splitsize = Integer.toString(split);
-        // conf.set("mapreduce.input.fileinputformat.split.minsize",splitsize
-        // );
-        // // conf.set("mapreduce.map.memory.mb", "2048"); // This is in Mb
-        // // conf.set("mapreduce.reduce.memory.mb", "2048");
-        // job1.setJarByClass(IMDbJoinDriver.class);
-        // job1.setNumReduceTasks(2); // Sets the no of Reducer
-        // MultipleInputs.addInputPath(job1, new Path(args[0]), TextInputFormat.class, TitleBasicsMapper.class);
-        // MultipleInputs.addInputPath(job1, new Path(args[1]), TextInputFormat.class, ActorsMapper.class);
-        // MultipleInputs.addInputPath(job1, new Path(args[2]), TextInputFormat.class, CrewMapper.class);
-        // job1.setReducerClass(JoinReducer.class);
-        // job1.setMapOutputKeyClass(Text.class);
-        // job1.setMapOutputValueClass(Text.class);
-        // job1.setOutputValueClass(IntWritable.class);
-        // job1.setOutputKeyClass(Text.class);
-        // FileOutputFormat.setOutputPath(job1, new Path(args[3]+"inter"));
-        // job1.waitForCompletion(true);
-        // System.exit(0);
     }
 }
 
-class ActorsMapper extends Mapper<LongWritable, Text, Text, Text> {
-
-    @Override
-    public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-        String[] fields = value.toString().split(",");
-
-        if (fields.length == 3) {
-            String titleId = fields[0];
-            String actorId = fields[1];
-            String actorName = fields[2];
-            
-            context.write(new Text(titleId), new Text("actor," + titleId + "," + actorId + "," + actorName));
-        }
-    }
-}
-
-class CrewMapper extends Mapper<LongWritable, Text, Text, Text> {
-
-
-    @Override
-    public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-        String[] fields = value.toString().split("\t");
-
-        if (fields.length >= 2) {
-            String titleId = fields[0];
-            String[] directors = fields[1].split(",");
-
-            // Use StringBuilder to build the crew information
-            StringBuilder crewInfo = new StringBuilder("crew," + titleId + ",");
-            for (String director : directors) {
-                crewInfo.append(director).append(" ");
-            }
-
-            // Remove the last comma if there are directors
-            if (directors.length > 0) {
-                crewInfo.deleteCharAt(crewInfo.length() - 1);
-            }
-
-            // Write the output
-            context.write(new Text(titleId), new Text(crewInfo.toString()));
-        }
-    }
-}
-
-class TitleBasicsMapper extends Mapper<LongWritable, Text, Text, Text> {
-
-    @Override
-    public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-        // Splitting the line from the TSV file into fields
-        String[] fields = value.toString().split("\t");
-
-        // Check if the line contains the expected number of fields (5 fields)
-        if (fields.length == 5) {
-            // Extracting individual fields
-            String titleId = fields[0];
-            String titleType = fields[1];
-            String titleName = fields[2];
-            String releaseYear = fields[3];
-            String genres = fields[4];
-
-            // Check if the titleType is "movie" and releaseYear is between 2010 and 2020
-            if (titleType.equals("movie") && isYearInRange(releaseYear, 1931, 1940)) {
-                // Emitting the title ID as key, and the rest of the information as value
-                context.write(new Text(titleId),
-                        new Text("titleBasics," + titleId + "," + titleName + "," + releaseYear + "," + genres));
-            }
-        }
-    }
-
-    // Helper method to check if the year is in the specified range
-    private boolean isYearInRange(String year, int startYear, int endYear) {
-        try {
-            int yearInt = Integer.parseInt(year);
-            return yearInt >= startYear && yearInt <= endYear;
-        } catch (NumberFormatException e) {
-            // If the year is not a valid integer, return false
-            return false;
-        }
-    }
-}
-
-class JoinReducer extends Reducer<Text, Text, Text, Text> {
-
-    @Override
-    public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-        String title = "", year = "", genre = "";
-        Set<String> actors = new HashSet<>();
-        Set<String> directors = new HashSet<>();
-
-        for (Text val : values) {
-            String[] parts = val.toString().split(",");
-            switch (parts[0]) {
-                case "titleBasics":
-                    title = parts[2];
-                    year = parts[3];
-                    genre = parts[4];
-                    break;
-                case "actor":
-                    actors.add(parts[2]);
-                    break;
-                case "director":
-                    directors.add(parts[1]);
-                    break;
-            }
-        }
-
-        if (!actors.isEmpty() && !directors.isEmpty()) {
-            for (String actor : actors) {
-                if (directors.contains(actor)) {
-                    // EMITTING final output format as key, value (output title, director1 director2, actor, genre, year)
-                    context.write(new Text(key), new Text(title + "," + getDirectorList(directors) + "," + actor + "," + genre + "," + year));
-                }
-            }
-        }
-    }
-
-    private String getDirectorList(Set<String> directors) {
-        StringBuilder directorList = new StringBuilder();
-        for (String director : directors) {
-            // seperating with spaces instead of commas
-            directorList.append(director).append(" ");
-        }
-        return directorList.toString().trim();
-    }
-}
