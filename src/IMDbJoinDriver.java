@@ -73,7 +73,7 @@ public class IMDbJoinDriver {
         }
     }
 
-    public static class MapperBasics extends Mapper<Object, Text, Text, Text, Text, Text, Text, Text, Text, Text> {
+    public static class MapperBasics extends Mapper<Object, Text, Text, Text> {
         private final static Text outValue = new Text();
         private Text word = new Text();
 
