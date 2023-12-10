@@ -11,7 +11,7 @@
 #SBATCH --time=10:00:00
 
 rm ~/.ssh/known_hosts
-export HADOOP_CONFG_DIR=/home/$USER/expanse
+export HADOOP_CONF_DIR=/home/$USER/expanse
 
 module reset
 module unload cpu/0.17.3b 
@@ -19,10 +19,10 @@ module load cpu/0.15.4
 module load hadoop
 module load openjdk
 
-SW=/expanse/lustre/projects/uot182/fegaras 
+SW=/expanse/lustre/projects/uot182/fegaras
 export HADOOP_HOME=$SW/hadoop-3.2.2
 export MYHADOOP_HOME=$SW/myhadoop
-PATH="$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$MYHAOOP_HOME/bin:$PATH"
+PATH="$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$MYHADOOP_HOME/bin:$PATH"
 
 myhadoop-configure.sh -s /scratch/$USER/job_$SLURM_JOBID
 cp $HADOOP_CONF_DIR/slaves $HADOOP_CONF_DIR/workers
