@@ -1,13 +1,13 @@
 #!/bin/bash
 #SBATCH -A uot191
 #SBATCH --job-name="MR_IMDB_Project"
-#SBATCH --output="IMDbJoinDriver.distr.out"
+#SBATCH --output="IMDbJoinDriver.build.out"
 #SBATCH --partition=shared
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --mem=5G
+#SBATCH --mem=16G
 #SBATCH --export=ALL
-#SBATCH --time=10
+#SBATCH --time=10:00:00
 
 module reset
 module unload cpu/0.17.3b 

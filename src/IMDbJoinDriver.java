@@ -180,8 +180,8 @@ public class IMDbJoinDriver {
         int split = 700 * 1024 * 1024; // This is in bytes
         String splitsize = Integer.toString(split);
         conf.set("mapreduce.input.fileinputformat.split.minsize", splitsize);
-        conf.set("mapreduce.map.memory.mb", "2048"); // This is in Mb
-        conf.set("mapreduce.reduce.memory.mb", "2048");
+        // conf.set("mapreduce.map.memory.mb", "2048"); // This is in Mb
+        // conf.set("mapreduce.reduce.memory.mb", "2048");
 
         Job job = Job.getInstance(conf, "imdb project");
         job.setJarByClass(IMDbJoinDriver.class);
@@ -194,11 +194,12 @@ public class IMDbJoinDriver {
         job.setReducerClass(ImdbReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
-        job.setOutputFormatClass(TextOutputFormat.class);
+        // job.setOutputFormatClass(TextOutputFormat.class);
 
         // job.setMapOutputKeyClass(Text.class);
         // job.setMapOutputValueClass(Text.class);
 
+        
         FileOutputFormat.setOutputPath(job, outPath);
         job.waitForCompletion(true);
         System.exit(0);

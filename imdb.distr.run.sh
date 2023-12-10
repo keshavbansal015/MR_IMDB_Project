@@ -6,9 +6,9 @@
 ## allocate 3 nodes for the Hadoop cluster: 3 datanodes, from which 1 is namenode
 #SBATCH --nodes=3
 #SBATCH --ntasks-per-node=1
-#SBATCH --mem=5G
+#SBATCH --mem=16G
 #SBATCH --export=ALL
-#SBATCH --time=10
+#SBATCH --time=10:00:00
 
 rm ~/.ssh/known_hosts
 export HADOOP_CONFG_DIR=/home/$USER/expanse
