@@ -1,10 +1,8 @@
 #!/bin/bash
-
 #SBATCH -A uot191
 #SBATCH --job-name="MR_IMDB_Project"
 #SBATCH --output="IMDbJoinDriver.distr.out"
-#SBATCH --partition=compute
-## allocate 3 nodes for the Hadoop cluster: 3 datanodes, from which 1 is namenode
+#SBATCH --partition=shared
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --mem=5G
@@ -26,7 +24,7 @@ rm -rf classes
 mkdir -p classes
 
 
-javac -d classes -cp classes:`hadoop classpath` src/*.java
+javac -d classes -cp classes:`hadoop classpath` src/IMDbJoinDriver.java
 jar cf IMDbJoinDriver.jar -C classes .
 
 chmod -R 750 classes
