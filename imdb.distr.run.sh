@@ -31,6 +31,5 @@ start-all.sh
 
 hdfs dfs -rm -r /user/$USER/*
 hdfs dfs -mkdir -p /user/$USER
-# hdfs dfs -mkdir -p /user/vsabhaya
 hdfs dfs -mkdir -p /user/$USER/input
 echo "Directory created"
