@@ -19,14 +19,14 @@ module load openjdk
 
 SW=/expanse/lustre/projects/uot182/fegaras 
 export HADOOP_HOME=$SW/hadoop-3.2.2
-PATH-"$HADOOP_HOME/bin:$PATH"
+PATH="$HADOOP_HOME/bin:$PATH"
 
 rm -rf IMDbJoinDriver.jar
 rm -rf classes
 mkdir -p classes
 
 
-javac -d classes -cp classes:'hadoop classpath' src/*.java
+javac -d classes -cp classes:`hadoop classpath` src/*.java
 jar cf IMDbJoinDriver.jar -C classes .
 
 chmod -R 750 classes
