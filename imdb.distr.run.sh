@@ -34,7 +34,7 @@ hdfs dfs -mkdir -p /user/$USER
 hdfs dfs -mkdir -p /user/$USER/input
 echo "Directory created"
 
-hdfs dfs -put input/* /user/$USER/input/
+hdfs dfs -put ~/MR_IMDB_Project/input/* /user/$USER/input/
 # hdfs dfs -mkdir -p /user/$USER/reducer1
 ##echo "Transferred to directory"
 
