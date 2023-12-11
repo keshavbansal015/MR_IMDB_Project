@@ -15,7 +15,6 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import java.io.IOException;
 import java.util.StringTokenizer;
 
-
 public class IMDbJoinDriver {
     public static class MapperActors
             extends Mapper<Object, Text, Text, Text> {
@@ -24,18 +23,16 @@ public class IMDbJoinDriver {
         private Text word = new Text();
 
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-            StringTokenizer itr = new StringTokenizer(value.toString(), "\n");
-
+            StringTokenizer itr = new StringTokenizer(value.toString().replace("\\N", "$$"), "\n");
             while (itr.hasMoreTokens()) {
                 String str = itr.nextToken();
                 String[] result = str.toString().split(",");
                 int n = result.length;
-
                 String titleId = result[0];
                 String actorId = result[1];
                 String actorName = result[2];
 
-                if (!titleId.equals("\\N") && !actorId.equals("\\N") && !actorName.equals("\\N")) {
+                if (!titleId.equals("$$") && !actorId.equals("$$") && !actorName.equals("$$")) {
                     String newKey = titleId;
                     String newValue = "a" + ";" + titleId + ";" + actorId + ";" + actorName;
                     word.set(newKey);
@@ -51,7 +48,7 @@ public class IMDbJoinDriver {
         private Text word = new Text();
 
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-            StringTokenizer itr = new StringTokenizer(value.toString(), "\n");
+            StringTokenizer itr = new StringTokenizer(value.toString().replace("\\N", "$$"), "\n");
             while (itr.hasMoreTokens()) {
                 String str = itr.nextToken();
                 String[] result = str.toString().split("\t");
@@ -62,7 +59,7 @@ public class IMDbJoinDriver {
                 if (titleId.equals("tconst")) {
                     continue;
                 }
-                if (!titleId.equals("\\N") && !directorsId.equals("\\N")) {
+                if (!titleId.equals("$$") && !directorsId.equals("$$")) {
                     String newKey = titleId;
                     String newValue = "c" + ";" + titleId + ";" + directorsId;
                     word.set(newKey);
@@ -78,10 +75,11 @@ public class IMDbJoinDriver {
         private Text word = new Text();
 
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-            StringTokenizer itr = new StringTokenizer(value.toString(), "\n");
+            StringTokenizer itr = new StringTokenizer(value.toString().replace("\\N", "$$"), "\n");
             while (itr.hasMoreTokens()) {
                 String str = itr.nextToken();
                 String[] result = str.toString().split("\t");
+                System.out.println(result);
                 int n = result.length;
 
                 String titleId = result[0];
@@ -94,15 +92,19 @@ public class IMDbJoinDriver {
                 String runtimeMinutes = result[7];
                 String genres = result[8];
                 if (titleId.equals("tconst") || !titleType.equals("movie") || !isYearInRange(startYear, 1931, 1940)
-                        || !titleId.equals("\\N") || !titleType.equals("\\N") || !originalTitle.equals("\\N")) {
+                        || !titleId.equals("$$") || !titleType.equals("$$") || !originalTitle.equals("$$")) {
                     continue;
                 }
-                String newKey = titleId;
-                String newValue = "b" + ";" + titleId + ";" + titleType + ";" + originalTitle + ";" + startYear + ";"
-                        + genres;
-                word.set(newKey);
-                outValue.set(newValue);
-                context.write(word, outValue);
+                if (!titleId.equals("$$") && !titleType.equals("$$") && !originalTitle.equals("$$")
+                        && !startYear.equals("$$") && !genres.equals("$$")) {
+                    String newKey = titleId;
+                    String newValue = "b" + ";" + titleId + ";" + titleType + ";" + originalTitle + ";" + startYear
+                            + ";" + genres;
+                    word.set(newKey);
+                    outValue.set(newValue);
+                    context.write(word, outValue);
+
+                }
             }
         }
 
@@ -128,31 +130,40 @@ public class IMDbJoinDriver {
 
             // Iterate over values to separate actor and director information
             for (Text val : values) {
-                String firstTwoChars = val.toString().substring(0, 2);
+                String firstTwoChars = val.toString().replace("\\N", "$$").substring(0, 2);
                 String value = val.toString();
                 if (firstTwoChars.equals("a;")) { // Assuming actor values contain the word 'actor'
                     actorDetails = value;
                 } else if (firstTwoChars.equals("c;")) { // Assuming director values contain the word 'director'
                     directorDetails = value;
-                } else if (firstTwoChars.equals("b;")){
+                } else if (firstTwoChars.equals("b;")) {
                     titleDetails = value;
                 }
             }
             
-            String actorId = actorDetails.split(";")[2];
-            String[] directorIds = directorDetails.split(";")[2].split(",");
-
-            for (String directorId: directorIds) {
-                if (directorId.equals(actorId)){
-                    String newKey = "";
-                    String[] titleDetailsSplit = titleDetails.split(";");
-                    String newValue = titleDetailsSplit[2]+","+titleDetailsSplit[3]+","+titleDetailsSplit[4]+","+titleDetailsSplit[5]+","+actorDetails.split(";")[3];
-                    word.set(newKey);
-                    outValue.set(newValue);
-                    context.write(word, outValue);
-                    break;
+            System.out.println(actorDetails);
+            System.out.println(directorDetails);
+            System.out.println(titleDetails);
+            try {
+                String actorId = actorDetails.split(";")[2];
+                String[] directorIds = directorDetails.split(";")[2].split(",");
+                for (String directorId : directorIds) {
+                    if (directorId.equals(actorId)) {
+                        String newKey = "";
+                        String[] titleDetailsSplit = titleDetails.split(";");
+                        String newValue = titleDetailsSplit[2] + "," + titleDetailsSplit[3] + "," + titleDetailsSplit[4]
+                                + "," + titleDetailsSplit[5] + "," + actorDetails.split(";")[3];
+                        word.set(newKey);
+                        outValue.set(newValue);
+                        context.write(word, outValue);
+                        break;
+                    }
                 }
+
+            } catch (NullPointerException e) {
+                System.out.println("REDUCER ERROR, not writing any data");
             }
+
         }
     }
 
@@ -172,7 +183,6 @@ public class IMDbJoinDriver {
         Path actorPath = new Path(actorData);
         Path crewPath = new Path(crewData);
         Path outPath = new Path(outData);
-
 
         // from presentation
         Configuration conf = new Configuration();
@@ -199,10 +209,8 @@ public class IMDbJoinDriver {
         // job.setMapOutputKeyClass(Text.class);
         // job.setMapOutputValueClass(Text.class);
 
-        
         FileOutputFormat.setOutputPath(job, outPath);
         job.waitForCompletion(true);
         System.exit(0);
     }
 }
-
